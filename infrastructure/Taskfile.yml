@@ -1,0 +1,177 @@
+version: '3'
+
+dotenv: ['.env']
+
+vars:
+  VOLUMES_LIST:
+    sh: |
+      if [ -n "$VOLUMES" ]; then
+        echo "$VOLUMES" | tr ' ' '\n' | grep -v '^$' || true
+      fi
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  list-volumes:
+    desc: List volumes that will be created
+    cmds:
+      - |
+        echo "📦 Volumes to create:"
+        echo ""
+        VOLUMES_LIST="{{.VOLUMES_LIST}}"
+        if [ -z "$VOLUMES_LIST" ]; then
+          echo "  (no volumes configured)"
+        else
+          for volume in $VOLUMES_LIST; do
+            if docker volume inspect "$volume" >/dev/null 2>&1; then
+              echo "  ✅ $volume (already exists)"
+            else
+              echo "  ⏭️  $volume (will be created)"
+            fi
+          done
+        fi
+
+  init:
+    desc: Initialize infrastructure (create network and volumes)
+    cmds:
+      - task: create-network
+      - task: create-volumes
+
+  create-network:
+    desc: Create Docker network with /24 subnet (half static, half DHCP)
+    vars:
+      NETWORK: '{{.NETWORK_NAME | default "shared"}}'
+      SUBNET_PREFIX: '{{.NETWORK_SUBNET | default "172.24.0"}}'
+    cmds:
+      - |
+        SUBNET="{{.SUBNET_PREFIX}}.0/24"
+        IP_RANGE="{{.SUBNET_PREFIX}}.128/25"
+        GATEWAY="{{.SUBNET_PREFIX}}.1"
+
+        echo "📡 Creating network: {{.NETWORK}}"
+        echo "   Subnet: $SUBNET"
+        echo "   Static range: {{.SUBNET_PREFIX}}.1-127 (for manual assignment)"
+        echo "   DHCP range: {{.SUBNET_PREFIX}}.128-254 (for automatic assignment)"
+        echo "   Gateway: $GATEWAY"
+
+        docker network create "{{.NETWORK}}" \
+          --driver bridge \
+          --subnet="$SUBNET" \
+          --ip-range="$IP_RANGE" \
+          --gateway="$GATEWAY" \
+          2>/dev/null && echo "   ✅ Created" || echo "   ✅ Already exists"
+
+  create-volumes:
+    desc: Create volumes from VOLUMES list
+    cmds:
+      - |
+        echo "📦 Creating volumes..."
+        VOLUMES_LIST="{{.VOLUMES_LIST}}"
+        if [ -z "$VOLUMES_LIST" ]; then
+          echo "   No volumes configured in .env"
+        else
+          CREATED=0
+          EXISTED=0
+          for volume in $VOLUMES_LIST; do
+            if docker volume inspect "$volume" >/dev/null 2>&1; then
+              echo "   ✅ $volume (already exists)"
+              EXISTED=$((EXISTED + 1))
+            else
+              docker volume create "$volume" >/dev/null 2>&1
+              echo "   ✨ $volume (created)"
+              CREATED=$((CREATED + 1))
+            fi
+          done
+          echo ""
+          echo "Summary: $CREATED created, $EXISTED already existed"
+        fi
+
+  check:
+    desc: Check infrastructure status
+    cmds:
+      - echo "📊 Network Status:"
+      - |
+        NETWORK="{{.NETWORK_NAME}}"
+        if docker network inspect "$NETWORK" >/dev/null 2>&1; then
+          echo "✅ $NETWORK"
+          docker network inspect "$NETWORK" --format '   Subnet: {{range .IPAM.Config}}{{.Subnet}}{{end}}'
+          docker network inspect "$NETWORK" --format '   Gateway: {{range .IPAM.Config}}{{.Gateway}}{{end}}'
+          docker network inspect "$NETWORK" --format '   DHCP Range: {{range .IPAM.Config}}{{.IPRange}}{{end}}'
+
+          CONTAINERS=$(docker network inspect "$NETWORK" --format '{{range .Containers}}{{.Name}} {{end}}')
+          if [ -n "$CONTAINERS" ]; then
+            echo "   Connected containers: $CONTAINERS"
+          else
+            echo "   Connected containers: none"
+          fi
+        else
+          echo "❌ $NETWORK (missing - run 'task init')"
+        fi
+      - echo ""
+      - echo "📦 Volumes Status:"
+      - |
+        VOLUMES_LIST="{{.VOLUMES_LIST}}"
+        if [ -z "$VOLUMES_LIST" ]; then
+          echo "  (no volumes configured)"
+        else
+          for volume in $VOLUMES_LIST; do
+            if docker volume inspect "$volume" >/dev/null 2>&1; then
+              SIZE=$(docker system df -v 2>/dev/null | awk -v vol="$volume" '$1 == vol {print $3; exit}')
+              if [ -z "$SIZE" ]; then SIZE="0B"; fi
+              echo "  ✅ $volume (size: $SIZE)"
+            else
+              echo "  ❌ $volume (MISSING - run 'task init')"
+            fi
+          done
+        fi
+
+  show-config:
+    desc: Show current configuration from .env
+    cmds:
+      - |
+        echo "📋 Current Configuration:"
+        echo ""
+        echo "Network:"
+        echo "  Name: {{.NETWORK_NAME}}"
+        echo "  Subnet: {{.NETWORK_SUBNET}}.0/24"
+        echo "  Static IPs: {{.NETWORK_SUBNET}}.1-127"
+        echo "  DHCP IPs: {{.NETWORK_SUBNET}}.128-254"
+        echo ""
+        echo "Volumes:"
+        VOLUMES_LIST="{{.VOLUMES_LIST}}"
+        if [ -z "$VOLUMES_LIST" ]; then
+          echo "  (none configured)"
+        else
+          for volume in $VOLUMES_LIST; do
+            echo "  • $volume"
+          done
+        fi
+
+  remove-network:
+    desc: Remove Docker network
+    prompt: Remove network {{.NETWORK_NAME}}?
+    cmds:
+      - |
+        echo "🗑️  Removing network: {{.NETWORK_NAME}}"
+        docker network rm "{{.NETWORK_NAME}}" 2>/dev/null && echo "   ✅ Removed" || echo "   ⏭️  Not found or in use"
+
+  inspect-network:
+    desc: Detailed network inspection
+    cmds:
+      - docker network inspect {{.NETWORK_NAME}}
+
+  inspect-volume:
+    desc: Inspect a specific volume (usage - task inspect-volume -- volume_name)
+    cmds:
+      - docker volume inspect {{.CLI_ARGS}}
+
+  prune:
+    desc: Remove unused networks and volumes (Docker-wide cleanup)
+    prompt: Remove all unused Docker networks and volumes?
+    cmds:
+      - docker network prune -f
+      - docker volume prune -f
+      - echo "✅ Cleanup complete"

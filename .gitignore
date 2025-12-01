@@ -1,0 +1,21 @@
+# Environment files with secrets
+.env
+*.env.local
+*.env.*.local
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Task cache
+.task/
+
+# Logs
+*.log

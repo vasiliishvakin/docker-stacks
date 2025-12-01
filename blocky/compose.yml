@@ -1,0 +1,13 @@
+services:
+  blocky:
+    image: spx01/blocky
+    container_name: blocky
+    networks:
+      - shared
+    volumes:
+      - ${BLOCKY_CONFIG_PATH}:/app/config.yml:ro
+    restart: unless-stopped
+
+networks:
+  shared:
+    external: true

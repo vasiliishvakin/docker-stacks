@@ -3,7 +3,11 @@ services:
     image: spx01/blocky
     container_name: blocky
     networks:
-      - shared
+      shared:
+        ipv4_address: ${BLOCKY_IP}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     volumes:
       - ${BLOCKY_CONFIG_PATH}:/app/config.yml:ro
     restart: unless-stopped

@@ -6,12 +6,13 @@ services:
       shared:
         ipv4_address: ${BLOCKY_IP}
     dns:
-      - 1.1.1.1
-      - 8.8.8.8
+      - ${DNS:-1.1.1.1}
+      - ${DNS_FALLBACK:-}
     volumes:
-      - ${BLOCKY_CONFIG_PATH}:/app/config.yml:ro
+      - ${CONFIG_PATH}:/app/config.yml:ro
     restart: unless-stopped
 
 networks:
   shared:
     external: true
+    name: ${NETWORK_NAME:-shared}

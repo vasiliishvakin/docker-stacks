@@ -1,0 +1,23 @@
+services:
+  docker-builder:
+    image: vasiliishvakin/docker-builder
+    container_name: docker-builder
+    privileged: true
+    environment:
+      - SSH_PUBLIC_KEY=${SSH_PUBLIC_KEY:-}
+    networks:
+      shared:
+    ports:
+      - ${SSH_PORT:-2222}:22
+    dns:
+      - ${DNS:-1.1.1.1}
+      - ${DNS_FALLBACK:-}
+    volumes:
+      - ${DOCKER_LIB}:/var/lib/docker
+      - ${ROOT_FOLDER}:/root
+    restart: no
+
+networks:
+  shared:
+    external: true
+    name: ${NETWORK_NAME:-shared}

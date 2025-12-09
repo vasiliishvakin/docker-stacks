@@ -1,0 +1,43 @@
+services:
+  tailscale:
+    image: tailscale/tailscale:stable
+    container_name: tailscale
+    hostname: ${TAILSCALE_HOSTNAME:-tailscale}
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: false
+      TS_ACCEPT_DNS: ${TS_ACCEPT_DNS:-true}
+      TS_AUTH_ONCE: true
+      # Individual option flags (processed by entrypoint.sh)
+      TS_ADVERTISE_EXIT_NODE: ${TS_ADVERTISE_EXIT_NODE:-false}
+      TS_ADVERTISE_ROUTES: ${TS_ADVERTISE_ROUTES:-}
+      TS_TAGS: ${TS_TAGS:-}
+      TS_SSH: ${TS_SSH:-false}
+      TS_ACCEPT_ROUTES: ${TS_ACCEPT_ROUTES:-false}
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ${TAILSCALE_DATA:-tailscale_data}:/var/lib/tailscale
+      - ./entrypoint.sh:/entrypoint.sh:ro
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    networks:
+      shared:
+    dns:
+      - ${DNS:-1.1.1.1}
+      - ${DNS_FALLBACK:-8.8.8.8}
+    entrypoint: /entrypoint.sh
+    healthcheck:
+      test: ["CMD", "tailscale", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+networks:
+  shared:
+    external: true
+    name: ${NETWORK_NAME:-shared}

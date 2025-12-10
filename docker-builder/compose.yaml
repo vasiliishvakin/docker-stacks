@@ -9,12 +9,11 @@ services:
     volumes:
       - docker:/var/lib/docker
       - root:/root
+      - workspace:/workspace
     restart: ${RESTART_POLICY:-unless-stopped}
+
     healthcheck:
-      test: ["CMD-SHELL",
-        "ip link show tailscale0 > /dev/null 2>&1 \
-        && nc -z 127.0.0.1 22 > /dev/null 2>&1"
-      ]
+      test: [ "CMD-SHELL", "ip link show tailscale0 > /dev/null 2>&1" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -23,3 +22,6 @@ services:
 volumes:
   docker:
   root:
+  workspace:
+    external: true
+    name: ${WORKSPACE}

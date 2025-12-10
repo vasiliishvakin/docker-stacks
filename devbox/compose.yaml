@@ -1,0 +1,18 @@
+services:
+  devbox:
+    image: ${CADDY_IMAGE:-vasiliishvakin/devbox:${PHP_VERSION:-php8.3}-latest}
+    container_name: devbox
+    network_mode: ${NETWORK_MODE:-container:tailscale}
+    environment:
+      - SSH_PUBLIC_KEY=${SSH_PUBLIC_KEY:-}
+      - SSH_PORT=${SSH_PORT:-22}
+    volumes:
+      - workspace:/workspace
+      - root:/root
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+volumes:
+  workspace:
+    external: true
+    name: ${WORKSPACE:-workspace}
+  root:

@@ -4,14 +4,14 @@ services:
     container_name: mariadb
     networks:
       shared:
-        ipv4_address: ${IP:-172.24.0.5}
+        ipv4_address: ${IP}
     environment:
       - TZ=${TZ:-UTC}
       - MYSQL_CHARSET=${MYSQL_CHARSET:-utf8mb4}
       - MYSQL_COLLATION=${MYSQL_COLLATION:-utf8mb4_unicode_ci}
     volumes:
-      - /data/self-hosted/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
-      - /data/self-hosted/mysql:/etc/mysql/conf.d
+      - ${MYSQL_INITDB}:/docker-entrypoint-initdb.d
+      - ${MYSQL_CONF}:/etc/mysql/conf.d
       - mysql_data:/var/lib/mysql
     restart: ${RESTART_POLICY:-unless-stopped}
 
@@ -23,3 +23,4 @@ networks:
 volumes:
   mysql_data:
     external: true
+    name: ${MYSQL_VOLUME_NAME:-mysql_data}

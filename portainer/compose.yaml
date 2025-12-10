@@ -1,15 +1,23 @@
 services:
   portainer:
-    image: ${PORTAINER_IMAGE:-portainer/portainer-ce:latest}
+    image: portainer/portainer-ce:2.33.5-alpine
     container_name: portainer
     network_mode: ${NETWORK_MODE:-container:tailscale}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
+      - data:/data
     restart: ${RESTART_POLICY:-unless-stopped}
     environment:
       AGENT_SECRET: ${AGENT_SECRET}
+    healthcheck:
+      test: ["CMD-SHELL",
+        "ip link show tailscale0 > /dev/null 2>&1 \
+        && wget --spider --no-check-certificate --timeout=3 --tries=1 https://127.0.0.1:9443 > /dev/null 2>&1"
+      ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
 
 volumes:
-  portainer_data:
-    external: true
+  data:

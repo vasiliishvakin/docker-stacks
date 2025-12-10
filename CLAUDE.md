@@ -51,6 +51,15 @@ task show-config
 # Remove network (with confirmation)
 task remove-network
 
+# Detailed network inspection
+task inspect-network
+
+# Inspect specific volume
+task inspect-volume -- volume_name
+
+# Remove all unused Docker networks and volumes (with confirmation)
+task prune
+
 # List all available Task commands
 task --list
 ```
@@ -91,12 +100,13 @@ infrastructure/        # Network and volume management tooling
 └── .env              # Local configuration (created from .env.dist, not in git)
 
 blocky/               # Example: Blocky DNS service stack
-└── compose.yml       # Docker Compose definition
+├── compose.yaml      # Docker Compose definition
+└── (config files)    # Optional: stack-specific configuration
 
 (other stacks...)     # Additional service stacks at root level
 ```
 
-**Note**: Stack files are organized as directories at the repository root (e.g., `blocky/`, not in a separate `stacks/` directory). Each stack directory contains its `compose.yml` and any related configuration files.
+**Note**: Stack files are organized as directories at the repository root (e.g., `blocky/`, `portainer/`, `tailscale/`). Each stack directory contains its `compose.yaml` and any related configuration files.
 
 ### Infrastructure Workflow
 
@@ -129,10 +139,28 @@ Each task uses Docker CLI to check existence before create operations to provide
 
 Stack files should be standalone YAML files containing complete service definitions. When deploying via Portainer:
 1. Use the "Repository" build method in Portainer
-2. Point to the specific stack YAML file in this repository
+2. Point to the specific stack YAML file in this repository (e.g., `blocky/compose.yaml`)
 3. Configure environment variables as needed for the stack
-4. Ensure required volumes are uncommented in `infrastructure/.env` and created via `task init`
-5. Ensure services connect to the correct network (default: `services`, or as configured in `NETWORK_NAME`)
+4. Ensure required external volumes are in `infrastructure/.env` and created via `task init`
+5. Ensure services connect to the correct network (default: `shared`, or as configured in `NETWORK_NAME`)
+
+### Stack Patterns
+
+**External Network**: Stacks reference the shared network as external:
+```yaml
+networks:
+  shared:
+    external: true
+    name: ${NETWORK_NAME:-shared}
+```
+
+**Volume Types**:
+- **External volumes**: Created via `task init` (e.g., `portainer_data` in `.env`)
+- **Inline volumes**: Defined directly in compose.yaml (e.g., `data:` without external reference)
+
+**Network Modes**:
+- Standard: `networks: shared:` with optional static IP (`ipv4_address: ${IP}`)
+- Container networking: `network_mode: container:<name>` shares another container's network namespace
 
 ## Development Notes
 
@@ -174,8 +202,63 @@ The bootstrap script (`infrastructure/bootstrap.sh`) is included in the reposito
 - Prompts before overwriting existing files
 - Displays next steps for infrastructure configuration
 
-### Claude Code Integration
+## Creating New Stacks
 
-This repository includes a `CLAUDE.md` file (this file) to provide context to Claude Code when working with the codebase.
+When adding a new stack to the repository:
 
-**Important**: `CLAUDE.md` should be added to your global gitignore (e.g., `~/.gitignore_global`), not the repository's `.gitignore`, so it remains a local development aid without being tracked in version control.
+1. **Create stack directory** at repository root:
+   ```bash
+   mkdir my-service
+   cd my-service
+   ```
+
+2. **Create `compose.yaml`** with standard patterns:
+   - Use external `shared` network
+   - Add environment variable defaults with `${VAR:-default}`
+   - Document required environment variables
+   - Use `restart: ${RESTART_POLICY:-unless-stopped}` for restart policy
+
+3. **Add required volumes** to `infrastructure/.env.dist`:
+   - If the stack needs persistent external volumes, add them to the `VOLUMES` line
+   - Format: space-separated list
+   - Example: `VOLUMES=existing_vol1 existing_vol2 new_service_data`
+
+4. **Test deployment**:
+   ```bash
+   cd infrastructure
+   task list-volumes   # Verify new volumes appear
+   task init           # Create volumes
+   cd ../my-service
+   docker compose up -d  # Test locally before pushing
+   ```
+
+5. **Document** in stack directory (optional):
+   - Add README.md if configuration is complex
+   - Include example environment variables
+   - Note any special requirements or dependencies
+
+## Local Stack Testing
+
+Test stacks locally before deploying to Portainer:
+
+```bash
+# From stack directory (e.g., blocky/)
+docker compose config              # Validate and view final compose file
+docker compose up -d               # Start stack
+docker compose logs -f             # View logs
+docker compose ps                  # Check container status
+docker compose down                # Stop and remove stack
+docker compose down -v             # Stop and remove stack including volumes
+```
+
+**Environment Variables**: Create a `.env` file in the stack directory for local testing (already gitignored):
+```bash
+cd blocky/
+cat > .env << EOF
+IP=172.24.0.10
+DNS=1.1.1.1
+CONFIG_PATH=/path/to/config.yml
+NETWORK_NAME=shared
+EOF
+docker compose up -d
+```

@@ -2,7 +2,6 @@ services:
   docker-builder:
     image: vasiliishvakin/docker-builder
     container_name: docker-builder
-    hostname: docker-builder
     privileged: true
     network_mode: ${NETWORK_MODE:-container:tailscale}
     environment:

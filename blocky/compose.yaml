@@ -4,13 +4,13 @@ services:
     container_name: blocky
     networks:
       shared:
-        ipv4_address: ${BLOCKY_IP}
+        ipv4_address: ${IP}
     dns:
       - ${DNS:-1.1.1.1}
-      - ${DNS_FALLBACK:-}
+      - ${DNS_FALLBACK:-8.8.8.8}
     volumes:
       - ${CONFIG_PATH}:/app/config.yml:ro
-    restart: unless-stopped
+    restart: ${RESTART_POLICY:-unless-stopped}
 
 networks:
   shared:

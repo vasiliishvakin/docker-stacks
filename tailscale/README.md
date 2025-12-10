@@ -17,12 +17,10 @@ Tailscale container for secure networking and VPN access to your Docker environm
    - Set `TS_AUTHKEY` with your generated key
    - Configure other options as needed
 
-4. **Create named volume**:
-   - Add `tailscale_data` to `infrastructure/.env` VOLUMES:
-     ```bash
-     VOLUMES=portainer_data traefik_certs tailscale_data
-     ```
-   - Run: `cd infrastructure && task init`
+4. **Set execute permissions on entrypoint script**:
+   ```bash
+   chmod 755 entrypoint.sh
+   ```
 
 5. **Deploy**:
    ```bash
@@ -36,11 +34,10 @@ All configuration is done via environment variables in `.env`:
 ### Required Settings
 
 - `TS_AUTHKEY`: Tailscale authentication key (required)
-- `TAILSCALE_DATA`: Named volume for persistent state (default: `tailscale_data`)
 
 ### Node Configuration
 
-- `TAILSCALE_HOSTNAME`: Hostname shown in Tailscale admin (default: `tailscale`)
+- `HOSTNAME`: Hostname shown in Tailscale admin (default: `tailscale`)
 - `TS_ACCEPT_DNS`: Accept DNS from Tailscale (default: `true`)
 - `TS_AUTH_ONCE`: Authenticate only once (default: `true`)
 
@@ -57,8 +54,29 @@ All configured via simple true/false or value settings:
 ### Network & DNS
 
 - `NETWORK_NAME`: External Docker network (default: `shared`)
-- `DNS`: Primary DNS server (default: `1.1.1.1`)
-- `DNS_FALLBACK`: Fallback DNS server (default: `8.8.8.8`)
+- `DNS_PRIMARY`: Primary DNS server (default: `1.1.1.1`)
+- `DNS_SECONDARY`: Secondary DNS server (default: `8.8.8.8`)
+
+### Port Exposure
+
+To expose ports for services using the Tailscale network (via `network_mode: service:tailscale`):
+
+1. Copy the override template:
+   ```bash
+   cp compose.override.yaml.example compose.override.yaml
+   ```
+
+2. Edit `compose.override.yaml` to add/remove ports:
+   ```yaml
+   services:
+     tailscale:
+       ports:
+         - "9000:9000"   # Portainer HTTP
+         - "9443:9443"   # Portainer HTTPS
+         - "8080:80"     # Additional service
+   ```
+
+3. Docker Compose automatically merges `compose.yaml` + `compose.override.yaml`
 
 ## Usage Examples
 
@@ -66,7 +84,7 @@ All configured via simple true/false or value settings:
 
 ```bash
 TS_AUTHKEY=tskey-auth-xxxxx
-TAILSCALE_HOSTNAME=docker-server
+HOSTNAME=docker-server
 TS_TAGS=tag:server
 ```
 
@@ -92,7 +110,7 @@ TS_TAGS=tag:router
 
 ```bash
 TS_AUTHKEY=tskey-auth-xxxxx
-TAILSCALE_HOSTNAME=docker-server
+HOSTNAME=docker-server
 TS_ADVERTISE_ROUTES=172.24.0.0/24
 TS_TAGS=tag:container
 TS_ACCEPT_ROUTES=true
@@ -112,10 +130,12 @@ This approach provides:
 
 ## Volume Management
 
-The `tailscale_data` named volume stores:
+The `data` volume stores:
 - Tailscale node state
 - Authentication credentials
 - Network configuration
+
+The volume is managed by Docker Compose and persists data across container restarts.
 
 **Important**: Don't delete this volume unless you want to re-authenticate the node.
 

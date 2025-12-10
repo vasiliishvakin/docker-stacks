@@ -1,0 +1,17 @@
+# Docker Compose Override Example for Tailscale Ports
+# Copy this file to compose.override.yaml and customize ports as needed
+# Docker Compose automatically merges compose.yaml + compose.override.yaml
+
+services:
+  tailscale:
+    ports:
+      # Portainer
+      - "9000:9000"   # HTTP
+      - "9443:9443"   # HTTPS
+
+      # Add more ports as needed for other services using Tailscale network
+      # Example for additional services:
+      # - "8080:80"     # Nginx HTTP
+      # - "8443:443"    # Nginx HTTPS
+      # - "3000:3000"   # Custom app
+      # - "5432:5432"   # PostgreSQL

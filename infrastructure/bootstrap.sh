@@ -71,10 +71,10 @@ install_task() {
                 echo -e "${YELLOW}Please install curl first:${NC}"
                 case "$DISTRO" in
                     ubuntu|debian|linuxmint)
-                        echo -e "  ${YELLOW}sudo apt-get install curl${NC}"
+                        echo -e "  ${YELLOW}apt-get install curl${NC}"
                         ;;
                     fedora|centos|rhel)
-                        echo -e "  ${YELLOW}sudo dnf install curl${NC}"
+                        echo -e "  ${YELLOW}dnf install curl${NC}"
                         ;;
                 esac
                 exit 1
@@ -83,24 +83,24 @@ install_task() {
             case "$DISTRO" in
                 ubuntu|debian|linuxmint)
                     echo -e "${BLUE}Setting up Task repository for Debian/Ubuntu...${NC}"
-                    curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.deb.sh' | sudo -E bash || {
+                    curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.deb.sh' | bash || {
                         echo -e "${RED}Failed to set up Task repository${NC}"
                         exit 1
                     }
                     echo -e "${BLUE}Installing Task via apt...${NC}"
-                    sudo apt-get update && sudo apt-get install -y task || {
+                    apt-get update && apt-get install -y task || {
                         echo -e "${RED}Failed to install Task${NC}"
                         exit 1
                     }
                     ;;
                 fedora|centos|rhel)
                     echo -e "${BLUE}Setting up Task repository for Fedora/CentOS...${NC}"
-                    curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.rpm.sh' | sudo -E bash || {
+                    curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.rpm.sh' | bash || {
                         echo -e "${RED}Failed to set up Task repository${NC}"
                         exit 1
                     }
                     echo -e "${BLUE}Installing Task via dnf...${NC}"
-                    sudo dnf install -y task || {
+                    dnf install -y task || {
                         echo -e "${RED}Failed to install Task${NC}"
                         exit 1
                     }

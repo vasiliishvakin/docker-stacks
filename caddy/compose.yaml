@@ -1,46 +1,51 @@
 services:
   tailscale-caddy:
-    image: tailscale/tailscale:latest
-    hostname: tailscale-caddy
+    image: tailscale/tailscale:${TS_VERSION:-latest}
+    hostname: ${HOSTNAME:-tailscale-caddy}
     environment:
       - TS_AUTHKEY=${TS_AUTHKEY}
-      - TS_AUTH_ONCE=true
+      - TS_AUTH_ONCE=${TS_AUTH_ONCE:-true}
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_USERSPACE=false
-      - TS_HOSTNAME=fndn-webserver02
-      - TS_ACCEPT_DNS=true
+      - TS_HOSTNAME=${TS_HOSTNAME:-caddy}
+      - TS_ACCEPT_DNS=${TS_ACCEPT_DNS:-true}
     volumes:
-      - tailscale_state:/var/lib/tailscale
+      - ${TS_DATA_VOLUME:-tailscale_state}:/var/lib/tailscale
     devices:
       - /dev/net/tun:/dev/net/tun
     cap_add:
       - net_admin
-    restart: unless-stopped
+    restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - internal
     dns:
-      - 172.20.0.2
-      - 1.1.1.1
+      - ${DNS:-1.1.1.1}
+      - ${DNS_FALLBACK:-8.8.8.8}
 
   caddy:
-    image: vasiliishvakin/caddy:2
+    image: ${CADDY_IMAGE:-vasiliishvakin/caddy:2}
     depends_on:
       - tailscale-caddy
     network_mode: service:tailscale-caddy
     volumes:
-      - workspace:/workspace
-      - caddy_data:/data
-      - caddy_config:/config
-      - /data/self-hosted/caddy/conf:/etc/caddy
-    restart: unless-stopped
+      - ${WORKSPACE_VOLUME:-workspace}:/workspace
+      - ${CADDY_DATA_VOLUME:-caddy_data}:/data
+      - ${CADDY_CONFIG_VOLUME:-caddy_config}:/config
+      - ${CADDY_CONF_PATH}:/etc/caddy
+    restart: ${RESTART_POLICY:-unless-stopped}
 
 networks:
   internal:
     external: true
+    name: ${NETWORK_NAME:-internal}
 
 volumes:
   workspace:
     external: true
+    name: ${WORKSPACE_VOLUME:-workspace}
   caddy_data:
+    name: ${CADDY_DATA_VOLUME:-caddy_data}
   caddy_config:
+    name: ${CADDY_CONFIG_VOLUME:-caddy_config}
   tailscale_state:
+    name: ${TS_DATA_VOLUME:-tailscale_state}

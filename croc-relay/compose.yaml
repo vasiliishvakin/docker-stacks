@@ -1,0 +1,19 @@
+services:
+  croc-relay:
+    image: schollz/croc
+    container_name: croc-relay
+    networks:
+      shared:
+    environment:
+      CROC_PASS: ${PASS}
+    command: >
+      relay --host ${HOST:-0.0.0.0} --ports ${PORTS:-9009,9010,9011}
+    ports:
+      - "${PORTS_START:-9009}-${PORTS_END:-9011}:${PORTS_START:-9009}-${PORTS_END:-9011}/tcp"
+      - "${PORTS_START:-9009}-${PORTS_END:-9011}:${PORTS_START:-9009}-${PORTS_END:-9011}/udp"
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+networks:
+  shared:
+    external: true
+    name: ${NETWORK_NAME:-shared}

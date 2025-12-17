@@ -7,10 +7,10 @@ services:
     environment:
       CROC_PASS: ${PASS}
     command: >
-      relay --host ${HOST:-0.0.0.0} --ports ${PORTS:-9009,9010,9011}
+      relay --host ${HOST:-0.0.0.0} --ports ${PORTS:-42009,42010,42011}
     ports:
-      - "${PORTS_START:-9009}-${PORTS_END:-9011}:${PORTS_START:-9009}-${PORTS_END:-9011}/tcp"
-      - "${PORTS_START:-9009}-${PORTS_END:-9011}:${PORTS_START:-9009}-${PORTS_END:-9011}/udp"
+      - "${PORTS_START:-42009}-${PORTS_END:-42011}:${PORTS_START:-42009}-${PORTS_END:-42011}/tcp"
+      - "${PORTS_START:-42009}-${PORTS_END:-42011}:${PORTS_START:-42009}-${PORTS_END:-42011}/udp"
     restart: ${RESTART_POLICY:-unless-stopped}
 
 networks:

@@ -5,7 +5,7 @@ services:
     networks:
       shared:
     environment:
-      CROC_PASS: ${PASS}
+      CROC_PASS: ${PASSWORD}
     command: >
       relay --host ${HOST:-0.0.0.0} --ports ${PORTS:-42009,42010,42011}
     ports:

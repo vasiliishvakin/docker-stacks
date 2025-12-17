@@ -12,6 +12,12 @@ services:
       - "${PORTS_START:-42009}-${PORTS_END:-42011}:${PORTS_START:-42009}-${PORTS_END:-42011}/tcp"
       - "${PORTS_START:-42009}-${PORTS_END:-42011}:${PORTS_START:-42009}-${PORTS_END:-42011}/udp"
     restart: ${RESTART_POLICY:-unless-stopped}
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z localhost ${PORTS_START:-42009} || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 5s
+      retries: 3
 
 networks:
   shared:

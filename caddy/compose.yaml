@@ -3,6 +3,9 @@ services:
     image: ${CADDY_IMAGE:-vasiliishvakin/caddy:2}
     container_name: caddy
     network_mode: ${NETWORK_MODE:-container:tailscale}
+    environment:
+      - EMAIL=${EMAIL}
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
     volumes:
       - workspace:/workspace
       - data:/data

@@ -7,8 +7,6 @@ services:
     dns:
       - ${DNS_PRIMARY:-1.1.1.1}
       - ${DNS_SECONDARY:-8.8.8.8}
-    ports:
-      - "${MEMOS_PORT:-5230}:${MEMOS_PORT:-5230}"
     volumes:
       - data:/var/opt/memos
     environment:

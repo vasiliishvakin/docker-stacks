@@ -4,7 +4,6 @@ services:
     container_name: memos
     networks:
       shared:
-        ipv4_address: ${IP}
     dns:
       - ${DNS_PRIMARY:-1.1.1.1}
       - ${DNS_SECONDARY:-8.8.8.8}

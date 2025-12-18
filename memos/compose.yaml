@@ -2,6 +2,12 @@ services:
   memos:
     image: neosmemo/memos:stable
     container_name: memos
+    networks:
+      shared:
+        ipv4_address: ${IP}
+    dns:
+      - ${DNS_PRIMARY:-1.1.1.1}
+      - ${DNS_SECONDARY:-8.8.8.8}
     ports:
       - "${MEMOS_PORT:-5230}:${MEMOS_PORT:-5230}"
     volumes:
@@ -13,6 +19,11 @@ services:
       - MEMOS_DATA=/var/opt/memos
       - MEMOS_INSTANCE_URL=${MEMOS_INSTANCE_URL}
     restart: ${RESTART_POLICY:-unless-stopped}
+
+networks:
+  shared:
+    external: true
+    name: ${NETWORK_NAME:-shared}
 
 volumes:
   data:

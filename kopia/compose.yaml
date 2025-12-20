@@ -16,7 +16,6 @@ services:
 
     environment:
       KOPIA_PASSWORD: ${KOPIA_PASSWORD}
-      USER: ${KOPIA_USER}
 
     volumes:
       # Kopia internal data

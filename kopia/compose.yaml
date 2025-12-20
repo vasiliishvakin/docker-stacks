@@ -1,0 +1,48 @@
+services:
+  kopia:
+    image: kopia/kopia:latest
+    container_name: ${KOPIA_CONTAINER_NAME:-kopia}
+    hostname: ${KOPIA_HOSTNAME:-kopia}
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+    command:
+      - server
+      - start
+      - --disable-csrf-token-checks
+      - --insecure
+      - --address=0.0.0.0:${KOPIA_SERVER_PORT:-51515}
+      - --server-username=${KOPIA_SERVER_USERNAME}
+      - --server-password=${KOPIA_SERVER_PASSWORD}
+
+    environment:
+      KOPIA_PASSWORD: ${KOPIA_PASSWORD}
+      USER: ${KOPIA_USER}
+
+    volumes:
+      # Kopia internal data
+      - kopia_config:/app/config
+      - kopia_cache:/app/cache
+      - kopia_logs:/app/logs
+      # Temporary mount for browsing snapshots
+      - kopia_tmp:/tmp
+
+      # Global shared workspace
+      - workspace:/workspace
+
+    networks:
+      - shared
+
+volumes:
+  kopia_config:
+  kopia_cache:
+  kopia_logs:
+  kopia_tmp:
+
+  workspace:
+    external: true
+    name: ${WORKSPACE:-workspace}
+
+networks:
+  shared:
+    external: true
+    name: ${NETWORK_NAME:-shared}

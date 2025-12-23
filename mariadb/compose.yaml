@@ -20,4 +20,4 @@ networks:
     name: ${NETWORK_NAME:-shared}
 
 volumes:
-  mysql_data:
+  data:

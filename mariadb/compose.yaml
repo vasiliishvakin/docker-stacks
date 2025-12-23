@@ -8,6 +8,7 @@ services:
       - TZ=${TZ:-UTC}
       - MYSQL_CHARSET=${MYSQL_CHARSET:-utf8mb4}
       - MYSQL_COLLATION=${MYSQL_COLLATION:-utf8mb4_unicode_ci}
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
     volumes:
       - ${MYSQL_INITDB}:/docker-entrypoint-initdb.d
       - ${MYSQL_CONF}:/etc/mysql/conf.d

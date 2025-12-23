@@ -5,8 +5,8 @@ services:
     networks:
       shared:
     volumes:
-      - ${PHP_LOCAL_INI:-}:/usr/local/etc/php/conf.d/zz-php.local.ini:ro
-      - ${FPM_WWW_CONF:-}:/usr/local/etc/php-fpm.d/www.conf:ro
+      - ${PHP_LOCAL_INI}:/usr/local/etc/php/conf.d/zz-php.local.ini:ro
+      - ${FPM_WWW_CONF}:/usr/local/etc/php-fpm.d/www.conf:ro
       - workspace:/workspace
     restart: ${RESTART_POLICY:-unless-stopped}
     stop_grace_period: 10s

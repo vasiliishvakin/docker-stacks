@@ -1,0 +1,23 @@
+services:
+  php-fpm:
+    image: ${IMAGE:-vasiliishvakin/php:8.3-fpm}
+    container_name: php-fpm
+    networks:
+      shared:
+    volumes:
+      - workspace:/workspace
+    restart: ${RESTART_POLICY:-unless-stopped}
+    stop_grace_period: 10s
+    working_dir: /workspace
+    expose:
+      - "9000"
+
+volumes:
+  workspace:
+    external: true
+    name: ${WORKSPACE:-workspace}
+
+networks:
+  shared:
+    external: true
+    name: ${NETWORK_NAME:-shared}

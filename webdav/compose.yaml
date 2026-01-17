@@ -1,0 +1,24 @@
+services:
+  webdav:
+    image: ghcr.io/hacdias/webdav
+    container_name: webdav
+    command: -c /etc/webdav/config.yml
+    networks:
+      shared:
+    volumes:
+      - ${CONFIG_PATH}:/etc/webdav:ro
+      - workspace:/workspace
+    restart: ${RESTART_POLICY:-unless-stopped}
+    expose:
+      - "6065"
+
+volumes:
+  workspace:
+    external: true
+    name: ${WORKSPACE:-workspace}
+
+
+networks:
+  shared:
+    external: true
+    name: ${NETWORK_NAME:-shared}
